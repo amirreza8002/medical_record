@@ -5,10 +5,20 @@ def make_db():
     con = sqlite3.connect("test.db")
     cur = con.cursor()
 
-    cur.execute("CREATE TABLE IF NOT EXISTS Person(id INTEGER PRIMARY KEY NOT NULL, name VARCHAR, age INT)")
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS Person(id INTEGER PRIMARY KEY NOT NULL, name VARCHAR, age INT)"
+    )
+
     cur.execute(
         "CREATE TABLE IF NOT EXISTS Condition(person_id INTEGER NOT NULL, condition TEXT,"
-        " FOREIGN KEY(person_id) REFERENCES Person(id))")
+        " id INTEGER PRIMARY KEY NOT NULL,"
+        " FOREIGN KEY(person_id) REFERENCES Person(id))"
+    )
+
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS Medicine(condition_id INTEGER NOT NULL, medicine TEXT,"
+        " FOREIGN KEY(condition_id) REFERENCES Condition(id))"
+    )
 
     cur.close()
     con.close()
@@ -45,11 +55,17 @@ def insert_condition(condition, name):
     # if we have only one condition
     if isinstance(condition, str):
         # check if the condition is already in the file or not
-        repeated_con = cur.execute("SELECT person_id FROM Condition WHERE condition = ? AND person_id = ?", (condition, get_id))
+        repeated_con = cur.execute(
+            "SELECT person_id FROM Condition WHERE condition = ? AND person_id = ?",
+            (condition, get_id),
+        )
 
         # check_id is the id we got to check if the person has a file in database or not
         if repeated_con.fetchone() is None:
-            cur.execute("INSERT INTO Condition VALUES(?, ?)", (get_id, condition))
+            cur.execute(
+                "INSERT INTO Condition(person_id, condition) VALUES(?, ?)",
+                (get_id, condition),
+            )
             con.commit()
 
             # close the connection
@@ -63,14 +79,17 @@ def insert_condition(condition, name):
             return False
 
     # if we have more than one condition
-    else:
+    elif isinstance(condition, list):
         # flatten condition from a list of lists into a list
         condition = [val for c in condition for val in c]
 
         # loop over condition
         for c in condition:
             # see if each condition is already in the file or not
-            repeated_con = cur.execute("SELECT person_id FROM Condition WHERE condition = ? AND person_id = ?", (c, get_id))
+            repeated_con = cur.execute(
+                "SELECT person_id FROM Condition WHERE condition = ? AND person_id = ?",
+                (c, get_id),
+            )
             # if condition is not in the file, insert it
             if repeated_con.fetchone() is None:
                 cur.execute("INSERT INTO Condition VALUES(?, ?)", (get_id, c))
@@ -89,12 +108,65 @@ def get_all_names():
     cur = con.cursor()
 
     # flattening the list of tuples into a list cause combobox had a bug with words that have space in them in tuples
-    names = [val for n in cur.execute("SELECT name FROM Person").fetchall() for val in n]
+    names = [
+        val for n in cur.execute("SELECT name FROM Person").fetchall() for val in n
+    ]
 
     cur.close()
     con.close()
 
     return names
+
+
+def insert_med(name, condition, med):
+    """insert medical condition into medicine table"""
+    con = sqlite3.connect("test.db")
+    cur = con.cursor()
+
+    # get the id of the name from person table
+    get_name_id = cur.execute(
+        "SELECT id FROM Person WHERE name = ?", (name,)
+    ).fetchone()[0]
+    # get the unique id of the condition from condition table
+    get_id = cur.execute(
+        "SELECT id FROM Condition WHERE person_id = ? AND condition = ?",
+        (get_name_id, condition),
+    ).fetchone()[0]
+
+    # if only one med input:
+    if isinstance(med, str):
+        # check if there is already such medicine for the condition in database
+        get_repeats = cur.execute(
+            "SELECT medicine FROM Medicine WHERE condition_id = ? AND medicine = ?",
+            (get_id, med),
+        ).fetchone()
+        # insert if it's a new filing
+        if get_repeats is None:
+            cur.execute(
+                "INSERT INTO Medicine(condition_id, medicine) VALUES(?, ?)",
+                (get_id, med),
+            )
+            con.commit()
+            return med
+    # if multiple med input:
+    elif isinstance(med, list):
+        for m in med:
+            # check for repeats
+            get_repeats = cur.execute(
+                "SELECT medicine FROM Medicine WHERE condition_id = ? AND medicine = ?",
+                (get_id, m),
+            ).fetchone()
+            # insert if new filing
+            if get_repeats is None:
+                cur.execute(
+                    "INSERT INTO Medicine(condition_id, medicine) VALUES(?, ?)",
+                    (get_id, m),
+                )
+                con.commit()
+                return med
+
+    cur.close()
+    con.close()
 
 
 # get the file for the selected person
@@ -104,9 +176,32 @@ def get_files(name):
 
     age = cur.execute("SELECT age FROM Person WHERE name =?", (name,)).fetchone()[0]
 
-    files = cur.execute("SELECT condition FROM Person LEFT JOIN Condition "
-                        "ON Person.id = Condition.person_id WHERE name = ?", (name,)).fetchall()
+    files = cur.execute(
+        "SELECT condition FROM Person LEFT JOIN Condition "
+        "ON Person.id = Condition.person_id WHERE name = ?",
+        (name,),
+    ).fetchall()
+
+    cur.close()
+    con.close()
     return age, files
+
+
+def get_med(condition, name):
+    con = sqlite3.connect("test.db")
+    cur = con.cursor()
+    name_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
+    con_id = cur.execute(
+        "SELECT id FROM Condition WHERE condition = ? AND person_id = ?",
+        (condition, name_id),
+    ).fetchone()[0]
+    meds = cur.execute(
+        "SELECT medicine FROM Medicine WHERE condition_id = ?", (con_id,)
+    ).fetchall()
+
+    cur.close()
+    con.close()
+    return meds
 
 
 # update a name
@@ -114,7 +209,9 @@ def update_name(old_name, new_name):
     con = sqlite3.connect("test.db")
     cur = con.cursor()
 
-    get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (old_name,)).fetchone()[0]
+    get_id = cur.execute(
+        "SELECT id FROM Person WHERE name = ?", (old_name,)
+    ).fetchone()[0]
 
     cur.execute("UPDATE Person SET name = ? WHERE id = ?", (new_name, get_id))
     con.commit()
@@ -142,7 +239,30 @@ def update_condition(old_condition, new_condition, name):
 
     get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
 
-    cur.execute("UPDATE Condition SET condition = ? WHERE condition = ? AND person_id = ?", (new_condition, old_condition, get_id))
+    cur.execute(
+        "UPDATE Condition SET condition = ? WHERE condition = ? AND person_id = ?",
+        (new_condition, old_condition, get_id),
+    )
+    con.commit()
+
+    cur.close()
+    con.close()
+
+
+def update_med(name, condition, old_med, new_med):
+    con = sqlite3.connect("test.db")
+    cur = con.cursor()
+
+    get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
+    con_id = cur.execute(
+        "SELECT id FROM Condition WHERE Person_id = ? AND condition = ?",
+        (get_id, condition),
+    ).fetchone()[0]
+
+    cur.execute(
+        "UPDATE Medicine SET medicine = ? WHERE condition_id = ? AND medicine = ?",
+        (new_med, con_id, old_med),
+    )
     con.commit()
 
     cur.close()
@@ -165,16 +285,40 @@ def full_file_delete(name):
 
     return "file deleted"
 
+
 # delete a condition
 def condition_delete(name, condition):
     con = sqlite3.connect("test.db")
     cur = con.cursor()
 
     get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
-    cur.execute("DELETE FROM Condition WHERE person_id = ? AND condition = ?", (get_id, condition))
+    cur.execute(
+        "DELETE FROM Condition WHERE person_id = ? AND condition = ?",
+        (get_id, condition),
+    )
     con.commit()
 
     cur.close()
     con.close()
 
     return "condition deleted"
+
+
+def medicine_delete(name, condition, med):
+    con = sqlite3.connect("test.db")
+    cur = con.cursor()
+
+    get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
+    con_id = cur.execute(
+        "SELECT id FROM Condition WHERE person_id = ? AND condition = ?",
+        (get_id, condition),
+    ).fetchone()[0]
+    cur.execute(
+        "DELETE FROM Medicine WHERE condition_id = ? AND medicine = ?", (con_id, med)
+    )
+    con.commit()
+
+    cur.close()
+    con.close()
+
+    return "medicine deleted"
