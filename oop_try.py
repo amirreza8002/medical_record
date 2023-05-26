@@ -4,44 +4,46 @@ from tkinter.messagebox import showinfo, askokcancel, WARNING
 from ctypes import windll
 import sql_funcs
 import pyttsx3
-from concurrent.futures import ThreadPoolExecutor
 
 windll.shcore.SetProcessDpiAwareness(1)
 
 
-class TextToSpeach():
-    """initiate the engine for text to speach"""
-    def __init__(self, record_text):
-        super().__init__()
-        self.record_text = record_text
-
-    def make_engine(self):
+class TextToSpeach:
+    def __init__(self):
+        """initiate the engine for text to speach"""
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 170)
-        return self.engine
 
-    def activate_voice(self):
-        """starts the engine"""
-        self.engine.say(self.record_text)
+    def voice_activated(self, texts):
+        """activate the voice"""
+        self.engine.say(texts)
         self.engine.runAndWait()
 
 
 class App(tk.Tk):
+    """make the root and start the app"""
+
     def __init__(self):
         super().__init__()
 
         self.title("medical record")
-        self.resizable(0, 0)
-        self.geometry("320x300")
+        self.resizable(False, False)
         self.style = ttk.Style()
         self.style.theme_use("xpnative")
 
+        # make the database
         sql_funcs.make_db()
 
+        # make the main page
         main_frame = MainFrame(self)
 
 
 class MainFrame(ttk.Frame):
+    """
+    first page of the app
+    just a bunch of buttons to go to other pages
+    """
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -53,6 +55,7 @@ class MainFrame(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        """buttons to open other pages, instructions on what each button does, and separator lines"""
         welcome = ttk.Label(self, text="welcome")
         welcome.pack(pady=(10, 0))
 
@@ -87,19 +90,24 @@ class MainFrame(ttk.Frame):
         edit_delete_button.pack()
 
     def open_add_page(self):
+        """opens a page for adding new data"""
         self.pack_forget()
         adding_page = AddingPage(self.root)
 
     def open_file_page(self):
+        """opens a page for seeing data"""
         self.pack_forget()
         open_file = OpenFile(self.root)
 
     def open_e_d_page(self):
+        """opens a page for editing data"""
         self.pack_forget()
         edit_delete_page = EditDelete(self.root)
 
 
 class AddingPage(ttk.Frame):
+    """a page that instructs on how to add new data"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -110,6 +118,10 @@ class AddingPage(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        buttons to go to a page for adding files
+        and to go to a page for adding medicine
+        """
         self.back_button = ttk.Button(self, text="<", command=self.back_button, width=5)
         self.back_button.pack(pady=(2, 3), anchor="w")
 
@@ -133,19 +145,27 @@ class AddingPage(ttk.Frame):
         self.open_medicine_file.pack()
 
     def back_button(self):
+        """a back button to go to previous page"""
         self.pack_forget()
         main_frame = MainFrame(self.root)
 
     def open_con_file(self):
+        """goes to a page to make a file with name, age, condition"""
         self.pack_forget()
         condition_file = ConditionFile(self.root)
 
     def open_medicine(self):
+        """goes to a page to add medication used for a condition"""
         self.pack_forget()
         medicine_file = MedicineFile(self.root)
 
 
 class ConditionFile(ttk.Frame):
+    """
+    a page to make new files
+    by adding name, age and conditions
+    """
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -156,11 +176,13 @@ class ConditionFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """gets all the names in database to display on a combobox"""
         self.names_list = sql_funcs.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
+        """combobox for choosing/adding name, entrys for adding age and condition(s)"""
         self.back_button = ttk.Button(
             self, text="<", command=self.back_button, width=5, takefocus=1
         )
@@ -191,7 +213,7 @@ class ConditionFile(ttk.Frame):
         self.sep_2 = ttk.Separator(self, orient="horizontal")
         self.sep_2.pack(fill="x", pady=10)
 
-        self.inst_1 = ttk.Label(self, text="please enter/choose the condition(s)")
+        self.inst_1 = ttk.Label(self, text="please enter the condition(s)")
         self.inst_1.pack()
         self.condition_label = ttk.Label(
             self, text="separate with a comma and a space (, )"
@@ -206,20 +228,23 @@ class ConditionFile(ttk.Frame):
         self.save_button.pack(pady=(15, 0))
 
     def back_button(self):
+        """a button to go to previous page"""
         self.pack_forget()
         adding_page = AddingPage(self.root)
 
     def save_info(self):
+        """save the information in database by passing in the name and age and condition(s)"""
         name = self.name_var.get()
         age = self.age_var.get()
         condition = self.condition_var.get()
 
+        # checking that the information is provided
         if len(name) <= 0 or len(age) <= 0 or len(condition) <= 0:
             showinfo(title="error", message="please input data")
             return
 
         if name.isnumeric():
-            self.name_label["text"] = "please use wrds for name"
+            self.name_label["text"] = "please use words for name"
             self.name_label["foreground"] = "red"
 
         if age.isnumeric():
@@ -230,6 +255,7 @@ class ConditionFile(ttk.Frame):
             return
 
         if ", " in condition:
+            # if there is more than one condition
             conditions = [condition.split(", ")]
             save_file = sql_funcs.insert_name(name, age)
             save_condition = sql_funcs.insert_condition(conditions, name)
@@ -237,17 +263,20 @@ class ConditionFile(ttk.Frame):
             self.saving_info(save_file, save_condition)
 
         elif "," in condition:
+            # checking for mistakes
             self.condition_label["text"] = "please use comma and a space afterwards"
             self.condition_label["foreground"] = "red"
             return
 
         else:
+            # if only one condition is passed
             save_file = sql_funcs.insert_name(name, age)
             save_condition = sql_funcs.insert_condition(condition, name)
 
             self.saving_info(save_file, save_condition)
 
     def saving_info(self, save_file, save_condition):
+        """shows messages on wheter the saving was successful"""
         if save_file == "new file":
             showinfo(title="saved", message="saved the data")
 
@@ -265,6 +294,11 @@ class ConditionFile(ttk.Frame):
 
 
 class MedicineFile(ttk.Frame):
+    """
+    a page to add new medication for a condition,
+    condition needs to exist in database
+    """
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -275,10 +309,12 @@ class MedicineFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get all the names from database and shows them in a combobox"""
         self.names_list = sql_funcs.get_all_names()
         self.create_widgets()
 
     def create_widgets(self):
+        """two combobox to show name and condition, one entry to get the medication(s)"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), anchor="w")
 
@@ -329,10 +365,12 @@ class MedicineFile(ttk.Frame):
         self.save_button.pack(pady=(25, 0))
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         adding_page = AddingPage(self.root)
 
     def file_selected(self, event=None):
+        """when a name is selected, get all the conditions related to that name"""
         if len(self.selected_name.get()) > 1:
             _, self.c = sql_funcs.get_files(self.selected_name.get())
             del _
@@ -341,6 +379,7 @@ class MedicineFile(ttk.Frame):
             self.choose_condition["value"] = condition
 
     def save_med(self):
+        """save the medicine in database, related to the condition specified"""
         self.med = self.med.get()
         self.selected_name = self.selected_name.get()
         self.selected_condition = self.selected_condition.get()
@@ -374,6 +413,8 @@ class MedicineFile(ttk.Frame):
 
 
 class OpenFile(ttk.Frame):
+    """a base page that opens other pages for seeing the data"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -385,6 +426,7 @@ class OpenFile(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        """two button, one opens a page to see conditions, one opens a page to see medication"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), anchor="w")
 
@@ -408,15 +450,19 @@ class OpenFile(ttk.Frame):
         main_frame = MainFrame(self.root)
 
     def open_condition(self):
+        """opens a page for seeing the condition files"""
         self.pack_forget()
         open_condition_file = OpenConditionFile(self.root)
 
     def open_medication(self):
+        """opens a page for seeing the medication for a condition"""
         self.pack_forget()
         open_medication_file = OpenMedicationFile(self.root)
 
 
 class OpenConditionFile(ttk.Frame):
+    """a page that gets needed data and shows conditions a user has"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -428,11 +474,16 @@ class OpenConditionFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get a list of all names in database and shows them in a combobox"""
         self.names_list = sql_funcs.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        a combobox shows all the names, when a name is chosen user can see the conditions related to that name
+        """
+
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), anchor="w")
 
@@ -452,10 +503,15 @@ class OpenConditionFile(ttk.Frame):
         self.see_button.pack(pady=(15, 0))
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         open_file = OpenFile(self.root)
 
     def opening_file(self):
+        """
+        when button is hit, if a name is chosen, get all the data related to that name and send it to
+        `SeeFile()`
+        """
         if len(self.selected_name.get()) > 0:
             db_age, db_file = sql_funcs.get_files(self.selected_name.get())
 
@@ -467,6 +523,8 @@ class OpenConditionFile(ttk.Frame):
 
 
 class OpenMedicationFile(ttk.Frame):
+    """a page that gets needed data and shows medication related to a condition"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -478,11 +536,13 @@ class OpenMedicationFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """gets all the names in databse and shows them in a combobox"""
         self.names_list = sql_funcs.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
+        """two comboboxes, one shows names and the other shows conditions"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), anchor="w")
 
@@ -515,18 +575,23 @@ class OpenMedicationFile(ttk.Frame):
         self.open_file.pack()
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         open_file = OpenFile(self.root)
 
     def name_selected(self, event=None):
+        """when a name is chosen, gets the data related to that name and shows the conditions in the combobox"""
         if len(self.selected_name.get()) > 0:
             _, self.c = sql_funcs.get_files(self.selected_name.get())
             del _
             self.condition = [val for t in self.c for val in t]
 
             self.condition_options["values"] = self.condition
+        else:
+            self.condition_options["values"] = []
 
     def open_med_file(self):
+        """if data is provided, open a page and show the data"""
         if len(self.chosen_condition.get()) > 0:
             self.pack_forget()
             see_med_file = SeeMedFile(
@@ -535,7 +600,9 @@ class OpenMedicationFile(ttk.Frame):
 
 
 class SeeFile(ttk.Frame):
-    def __init__(self, root, file_age, file_name, file, engine_fut):
+    """a page that shows the data related to a name in a text file with the ability to hear them"""
+
+    def __init__(self, root, file_age, file_name, file):
         super().__init__(root)
 
         self.root = root
@@ -546,11 +613,11 @@ class SeeFile(ttk.Frame):
         self.file_age = file_age
         self.file_name = file_name
         self.file = file
-        self.engine_fut = engine_fut
 
         self.create_widgets()
 
     def create_widgets(self):
+        """a text file to see all the data and a button to activate the text to speach and hear the data"""
         self.back_button = tk.Button(
             self, text="<", width=5, border=2, command=self.back_button
         )
@@ -571,7 +638,7 @@ class SeeFile(ttk.Frame):
         self.texts = self.file_text.get("1.0", "end")
 
         self.speach_button = tk.Button(
-            self, text="hear the text", border=3, command=self.text_to_speach
+            self, text="hear the text", border=3, command=self.voice
         )
         self.speach_button.pack(side="left", pady=(7, 5))
 
@@ -579,12 +646,16 @@ class SeeFile(ttk.Frame):
         self.pack_forget()
         open_file = OpenFile(self.root)
 
-    def text_to_speach(self):
-        engine = self.engine_fut.result()
-        engine.say(self.texts)
-        engine.runAndWait()
+    def voice(self):
+        """activate text to speach"""
+        # tts is an object of the TextToSpeach() class, see the last lines for reference
+        global tts
+        tts.voice_activated(self.texts)
+
 
 class SeeMedFile(ttk.Frame):
+    """a page that shows the data related to a condition in a text file with the ability to hear them"""
+
     def __init__(self, root, name, condition):
         super().__init__(root)
 
@@ -598,14 +669,16 @@ class SeeMedFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get the medication of the condition and the age of the person for showing in text"""
+        self.meds = sql_funcs.get_med(self.condition, self.name)
+
         self.age, _ = sql_funcs.get_files(self.name)
         del _
 
         self.create_widgets()
 
     def create_widgets(self):
-        self.meds = sql_funcs.get_med(self.condition, self.name)
-
+        """a text file that shows all the data"""
         self.back_button = tk.Button(
             self, text="<", width=5, border=2, command=self.back_button
         )
@@ -625,10 +698,6 @@ class SeeMedFile(ttk.Frame):
         self.med_text["state"] = "disabled"
 
         self.texts = self.med_text.get("1.0", "end")
-        self.tts = TextToSpeach(
-            self.texts,
-        )
-        self.tts.run()
 
         self.speach_button = tk.Button(
             self, text="hear the text", border=3, command=self.text_to_speach
@@ -636,14 +705,20 @@ class SeeMedFile(ttk.Frame):
         self.speach_button.pack(side="left", pady=(7, 5))
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         open_medication_file = OpenMedicationFile(self.root)
 
     def text_to_speach(self):
-        self.tts.activate_voice()
+        """avtivate text to speach and hear the data"""
+        # tts is an object of TextToSpeach() class, see last lines for reference
+        global tts
+        tts.voice_activated(self.texts)
 
 
 class EditDelete(ttk.Frame):
+    """a base page with buttons that get you to pages for editing or deleting data"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -654,6 +729,7 @@ class EditDelete(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        """two buttons, one for edit page, one for delete page"""
         self.back_button = tk.Button(
             self, text="<", width=5, border=2, command=self.back_button
         )
@@ -681,19 +757,24 @@ class EditDelete(ttk.Frame):
         self.delete_button.pack()
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         main_frame = MainFrame(self.root)
 
     def open_edit_page(self):
+        """go to edit page"""
         self.pack_forget()
         edit_page = EditPage(self.root)
 
     def open_delete_page(self):
+        """go to delete page"""
         self.pack_forget()
         del_page = DeletePage(self.root)
 
 
 class EditPage(ttk.Frame):
+    """a base page that opens other pages for editing different types of data"""
+
     def __init__(self, root):
         super().__init__(root)
 
@@ -705,11 +786,18 @@ class EditPage(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get a list of all names in database and show them in a combobox"""
         self.names_list = sql_funcs.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        one combobox to choose a name, four buttons that each gets you to a page foe editing different data:
+        one page foe editing name, one page for editing age, one page for condition and one page for medicine
+        buttons are deactivated until a name is chosen
+        """
+
         self.back_button = tk.Button(
             self, text="<", width=5, border=2, command=self.back_button
         )
@@ -774,12 +862,16 @@ class EditPage(ttk.Frame):
         self.med_button.pack(pady=10)
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_delete_page = EditDelete(self.root)
 
     def name_selected(self, event=None):
-        """this function may seem like bad design, but it saves me
-        from checking if a name is selected for every other function"""
+        """
+        activate the buttons if a name is chosen and deactivate them if selection is removed
+        this function may seem like bad design, but it saves me
+        from checking if a name is selected for every other function
+        """
         if len(self.selected_name.get()) > 0:
             self.name_button["state"] = "normal"
             self.age_button["state"] = "normal"
@@ -794,23 +886,29 @@ class EditPage(ttk.Frame):
             self.med_button["state"] = "disabled"
 
     def edit_name(self):
+        """a page to edit name"""
         self.pack_forget()
         edit_name_page = EditNamePage(self.root, self.selected_name)
 
     def edit_age(self):
+        """a page to edit age"""
         self.pack_forget()
         edit_age_page = EditAgePage(self.root, self.selected_name)
 
     def edit_condition(self):
+        """a page to edit condition"""
         self.pack_forget()
         edit_condition_page = EditConditionPage(self.root, self.selected_name)
 
     def edit_med(self):
+        """a page to edit medication"""
         self.pack_forget()
         edit_medication_page = EditMedicationPage(self.root, self.selected_name)
 
 
 class EditNamePage(ttk.Frame):
+    """a page for editing name"""
+
     def __init__(self, root, old_name):
         super().__init__(root)
         self.old_name = old_name
@@ -823,12 +921,14 @@ class EditNamePage(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        """an entry to enter the new name"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
 
         self.info_1 = ttk.Label(self, text="the name you are changing is: ")
         self.pack()
 
+        # show the old name as instruction
         self.info_2 = ttk.Label(self, text=f"{self.old_name}", foreground="red")
         self.info_2.pack(pady=(0, 20))
 
@@ -846,10 +946,12 @@ class EditNamePage(ttk.Frame):
         self.save_button.pack(pady=15)
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_page = EditPage(self.root)
 
     def save_name(self):
+        """check if the data is inputted right and then save them"""
         if len(self.new_name.get()) <= 0:
             showinfo(title="error", message="please input the data")
             return
@@ -864,6 +966,8 @@ class EditNamePage(ttk.Frame):
 
 
 class EditAgePage(ttk.Frame):
+    """a page to edit age"""
+
     def __init__(self, root, name):
         super().__init__(root)
         self.name = name
@@ -875,12 +979,14 @@ class EditAgePage(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get the old age from database to show as instruction"""
         self.old_age, _ = sql_funcs.get_files(self.name)
         del _
 
         self.create_widgets()
 
     def create_widgets(self):
+        """an entry to get new age"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
 
@@ -904,10 +1010,12 @@ class EditAgePage(ttk.Frame):
         self.save_button.pack(pady=15)
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_page = EditPage(self.root)
 
     def save_age(self):
+        """check if the data inputted is right, then save"""
         if self.new_age.get().isnumeric():
             sql_funcs.update_age(self.name, int(self.new_age.get()))
             self.destroy()
@@ -919,6 +1027,8 @@ class EditAgePage(ttk.Frame):
 
 
 class EditConditionPage(ttk.Frame):
+    """a page to edit a condition"""
+
     def __init__(self, root, name):
         super().__init__(root)
         self.name = name
@@ -931,13 +1041,16 @@ class EditConditionPage(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get all the condition related to the name chosen in EditPage to show in a combobox"""
         _, self.c = sql_funcs.get_files(self.name)
         del _
+        # list of list is flattened to a list
         self.condition = [val for t in self.c for val in t]
 
         self.create_widgets()
 
     def create_widgets(self):
+        """one combobox that shows all conditions to be chosen, one entry to edit the chosen condition"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
 
@@ -967,10 +1080,12 @@ class EditConditionPage(ttk.Frame):
         self.save_button.pack(pady=15)
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_page = EditPage(self.root)
 
     def save_condition(self):
+        """check if inputted data is right, then save"""
         if len(self.selected_condition.get()) > 1 and len(self.new_condition.get()) > 1:
             sql_funcs.update_condition(
                 self.selected_condition.get(), self.new_condition.get(), self.name
@@ -983,6 +1098,8 @@ class EditConditionPage(ttk.Frame):
 
 
 class EditMedicationPage(ttk.Frame):
+    """a page to edit a medicine"""
+
     def __init__(self, root, name):
         super().__init__(root)
         self.root = root
@@ -995,13 +1112,21 @@ class EditMedicationPage(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get all the condition related to the name chosen in EditPage to be shown in a combobox"""
         _, self.c = sql_funcs.get_files(self.name)
         del _
+        # list of lists is flattened into a list
         self.condition = [val for t in self.c for val in t]
 
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        one combobox that shows all the conditions,
+        one combobox that shows all the medication used for that condition,
+        second combobox gets data when the first one is selected,
+        an entry to get the new medicine
+        """
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), padx=10, anchor="w")
 
@@ -1045,10 +1170,15 @@ class EditMedicationPage(ttk.Frame):
         self.save.pack()
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_page = EditPage(self.root)
 
     def condition_selected(self, event=None):
+        """
+        when a condition is selected in first combobox,
+        get all the medication related to that condition and show them in second combobox
+        """
         if len(self.chosen_condition.get()) > 0:
             self.condition = self.chosen_condition.get()
             self.m = sql_funcs.get_med(self.chosen_condition.get(), self.name)
@@ -1058,6 +1188,7 @@ class EditMedicationPage(ttk.Frame):
             self.medicine_options["values"] = []
 
     def save_data(self):
+        """check if the data inputted is right, then save it"""
         if len(self.old_med_var.get()) > 0 and len(self.new_med_var.get()) > 0:
             sql_funcs.update_med(
                 self.name,
@@ -1071,6 +1202,8 @@ class EditMedicationPage(ttk.Frame):
 
 
 class DeletePage(ttk.Frame):
+    """a page for deleting data"""
+
     def __init__(self, root):
         super().__init__(root)
         self.root = root
@@ -1081,11 +1214,17 @@ class DeletePage(ttk.Frame):
         self.get_data()
 
     def get_data(self):
+        """get a list of all names in database and show in a combobox"""
         self.names_list = sql_funcs.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        three Radiobuttons that let you decide what kind of data you want to delete
+        three comboboxes to get the data to be deleted
+        comboboxes activate when related radiobutton is selected
+        """
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
 
@@ -1157,41 +1296,60 @@ class DeletePage(ttk.Frame):
         self.delete_button.pack(anchor="s", pady=10)
 
     def back_button(self):
+        """go to previous page"""
         self.pack_forget()
         edit_delete_page = EditDelete(self.root)
 
     def option_selected(self):
+        # if deleting condition or medicine radiobutton is selected:
         if (
             self.selected_option.get() == "condition"
             or self.selected_option.get() == "medicine"
         ):
+            # condition combobox gets activated in both case cause medications are related to conditions
             self.condition_options["state"] = "readonly"
+            # if medicine radiobutton is activated open the combobox for it
             if self.selected_option.get() == "medicine":
                 self.medicine_options["state"] = "readonly"
+            # this option is for user changes radiobutton selection
             else:
                 self.medicine_options["state"] = "disabled"
-
+        # this option is for when user changes the selection
         else:
             self.condition_options["state"] = "disabled"
             self.medicine_options["state"] = "disabled"
 
     def file_selected(self, event=None):
+        """when a name is selected, get all the condition related to that name and get them in condition combobox"""
         if len(self.chosen_name.get()) > 0:
+            # get data from database
             _, self.c = sql_funcs.get_files(self.chosen_name.get())
             del _
 
+            # flatten the list of lists into a list
             condition = [val for t in self.c for val in t]
+
             self.condition_options["values"] = condition
 
     def con_selected(self, event=None):
+        """
+        when a condition is selected
+        get all the medication related to that condition and get them into medicine combobox
+        """
         if len(self.chosen_condition.get()) > 0:
+            # get data from database
             self.m = sql_funcs.get_med(
                 self.chosen_condition.get(), self.chosen_name.get()
             )
+            # flatten the list of lists into a list
             meds = [val for i in self.m for val in i]
             self.medicine_options["values"] = meds
 
     def delete_func(self):
+        """
+        depending on the type of deleting user has chosen with radiobuttons,
+        ask if they are sue then activate the related function
+        """
         if self.selected_option.get() == "file":
             self.answer = askokcancel(
                 title="delete file",
@@ -1219,6 +1377,7 @@ class DeletePage(ttk.Frame):
                 self.delete_med()
 
     def delete_file(self):
+        """if user has chosen to delete a file, delete the whole file"""
         self.del_info = sql_funcs.full_file_delete(self.chosen_name.get())
         if self.del_info == "file deleted":
             self.destroy()
@@ -1226,6 +1385,7 @@ class DeletePage(ttk.Frame):
             del_page = DeletePage(self.root)
 
     def delete_condition(self):
+        """if user has chosen to delete a condition, delete it"""
         self.del_info = sql_funcs.condition_delete(
             self.chosen_name.get(), self.chosen_condition.get()
         )
@@ -1235,6 +1395,7 @@ class DeletePage(ttk.Frame):
             del_page = DeletePage(self.root)
 
     def delete_med(self):
+        """if the user has chosen to delete a medicine, delete it"""
         self.del_info = sql_funcs.medicine_delete(
             self.chosen_name.get(), self.chosen_condition.get(), self.chosen_med.get()
         )
@@ -1246,5 +1407,9 @@ class DeletePage(ttk.Frame):
 
 
 if __name__ == "__main__":
+    # tts is an object of TextToSpeach class, it activates the engine in the background (see line 11)
+    tts = TextToSpeach()
+
+    # app is an object of App class, it starts the gui app (see line 23)
     app = App()
     app.mainloop()
