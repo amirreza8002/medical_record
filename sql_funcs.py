@@ -275,9 +275,13 @@ def full_file_delete(name):
     cur = con.cursor()
 
     get_id = cur.execute("SELECT id FROM Person WHERE name = ?", (name,)).fetchone()[0]
+    con_id = cur.execute("SELECT id FROM Condition WHERE person_id = ?", (get_id,)).fetchall()
+    con_id = [val for i in con_id for val in i]
 
     cur.execute("DELETE FROM Person WHERE name = ?", (name,))
     cur.execute("DELETE FROM Condition WHERE person_id = ?", (get_id,))
+    for i in con_id:
+        cur.execute("DELETE FROM Medicine WHERE condition_id = ?", (i,))
     con.commit()
 
     cur.close()
