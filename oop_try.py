@@ -4,20 +4,24 @@ from tkinter.messagebox import showinfo, askokcancel, WARNING
 from ctypes import windll
 import sql_funcs
 import pyttsx3
-# from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 windll.shcore.SetProcessDpiAwareness(1)
 
 
 class TextToSpeach():
+    """initiate the engine for text to speach"""
     def __init__(self, record_text):
         super().__init__()
         self.record_text = record_text
 
+    def make_engine(self):
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 170)
+        return self.engine
 
     def activate_voice(self):
+        """starts the engine"""
         self.engine.say(self.record_text)
         self.engine.runAndWait()
 
@@ -531,7 +535,7 @@ class OpenMedicationFile(ttk.Frame):
 
 
 class SeeFile(ttk.Frame):
-    def __init__(self, root, file_age, file_name, file):
+    def __init__(self, root, file_age, file_name, file, engine_fut):
         super().__init__(root)
 
         self.root = root
@@ -565,10 +569,7 @@ class SeeFile(ttk.Frame):
 
         self.texts = self.file_text.get("1.0", "end")
 
-        self.tts = TextToSpeach(
-            self.texts,
-        )
-        # self.tts.run()
+        self.engine_fut = engine_fut
 
         self.speach_button = tk.Button(
             self, text="hear the text", border=3, command=self.text_to_speach
@@ -580,8 +581,9 @@ class SeeFile(ttk.Frame):
         open_file = OpenFile(self.root)
 
     def text_to_speach(self):
-        self.tts.activate_voice()
-
+        engine = self.engine_fut.result()
+        engine.say(self.texts)
+        engine.runAndWait()
 
 class SeeMedFile(ttk.Frame):
     def __init__(self, root, name, condition):
