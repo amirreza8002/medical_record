@@ -546,6 +546,7 @@ class SeeFile(ttk.Frame):
         self.file_age = file_age
         self.file_name = file_name
         self.file = file
+        self.engine_fut = engine_fut
 
         self.create_widgets()
 
@@ -568,8 +569,6 @@ class SeeFile(ttk.Frame):
         self.file_text["state"] = "disabled"
 
         self.texts = self.file_text.get("1.0", "end")
-
-        self.engine_fut = engine_fut
 
         self.speach_button = tk.Button(
             self, text="hear the text", border=3, command=self.text_to_speach
