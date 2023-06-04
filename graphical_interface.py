@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.messagebox import showinfo, askokcancel, WARNING
 from ctypes import windll
-import sql_funcs
+import project
 import pyttsx3
 
 windll.shcore.SetProcessDpiAwareness(1)
@@ -32,7 +32,7 @@ class App(tk.Tk):
         self.style.theme_use("xpnative")
 
         # make the database
-        sql_funcs.make_db()
+        project.main()
 
         # make the main page
         main_frame = MainFrame(self)
@@ -177,7 +177,7 @@ class ConditionFile(ttk.Frame):
 
     def get_data(self):
         """gets all the names in database to display on a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        self.names_list = project.get_all_names()
 
         self.create_widgets()
 
@@ -234,9 +234,9 @@ class ConditionFile(ttk.Frame):
 
     def save_info(self):
         """save the information in database by passing in the name and age and condition(s)"""
-        name = self.name_var.get()
-        age = self.age_var.get()
-        condition = self.condition_var.get()
+        name = self.name_var.get().strip()
+        age = self.age_var.get().strip()
+        condition = self.condition_var.get().strip()
 
         # checking that the information is provided
         if len(name) <= 0 or len(age) <= 0 or len(condition) <= 0:
@@ -256,11 +256,7 @@ class ConditionFile(ttk.Frame):
 
         if ", " in condition:
             # if there is more than one condition
-            conditions = [condition.split(", ")]
-            save_file = sql_funcs.insert_name(name, age)
-            save_condition = sql_funcs.insert_condition(conditions, name)
-
-            self.saving_info(save_file, save_condition)
+            condition = condition.split(", ")
 
         elif "," in condition:
             # checking for mistakes
@@ -268,20 +264,20 @@ class ConditionFile(ttk.Frame):
             self.condition_label["foreground"] = "red"
             return
 
-        else:
-            # if only one condition is passed
-            save_file = sql_funcs.insert_name(name, age)
-            save_condition = sql_funcs.insert_condition(condition, name)
+        # if no error
+        save_file = project.insert_name(name, age)
+        save_condition = project.insert_condition(condition, name)
 
+        if save_file is not None and save_condition is not None:
             self.saving_info(save_file, save_condition)
 
     def saving_info(self, save_file, save_condition):
-        """shows messages on wheter the saving was successful"""
+        """shows messages on whether the saving was successful"""
         if save_file == "new file":
             showinfo(title="saved", message="saved the data")
 
-        elif save_file == "new condition":
-            if save_condition:
+        elif save_file == "existing file":
+            if save_condition is not False:
                 showinfo(title="added", message="added data to existing file")
             else:
                 showinfo(
@@ -290,7 +286,7 @@ class ConditionFile(ttk.Frame):
                 )
                 return
         self.destroy()
-        adding_page = AddingPage(self.root)
+        condition_file = ConditionFile(self.root)
 
 
 class MedicineFile(ttk.Frame):
@@ -310,7 +306,7 @@ class MedicineFile(ttk.Frame):
 
     def get_data(self):
         """get all the names from database and shows them in a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        self.names_list = project.get_all_names()
         self.create_widgets()
 
     def create_widgets(self):
@@ -372,11 +368,10 @@ class MedicineFile(ttk.Frame):
     def file_selected(self, event=None):
         """when a name is selected, get all the conditions related to that name"""
         if len(self.selected_name.get()) > 1:
-            _, self.c = sql_funcs.get_files(self.selected_name.get())
+            _, self.conditions = project.get_files(self.selected_name.get())
             del _
 
-            condition = [val for t in self.c for val in t]
-            self.choose_condition["value"] = condition
+            self.choose_condition["value"] = self.condition
 
     def save_med(self):
         """save the medicine in database, related to the condition specified"""
@@ -388,7 +383,7 @@ class MedicineFile(ttk.Frame):
             return
         if ", " in self.med:
             self.meds = self.med.split(", ")
-            med_info: list = sql_funcs.insert_med(
+            med_info: list = project.insert_med(
                 self.selected_name, self.selected_condition, self.meds
             )
 
@@ -403,7 +398,7 @@ class MedicineFile(ttk.Frame):
             return
 
         else:
-            med_info: str = sql_funcs.insert_med(
+            med_info: str = project.insert_med(
                 self.selected_name, self.selected_condition, self.med
             )
             if med_info == self.med:
@@ -475,7 +470,7 @@ class OpenConditionFile(ttk.Frame):
 
     def get_data(self):
         """get a list of all names in database and shows them in a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        self.names_list = project.get_all_names()
 
         self.create_widgets()
 
@@ -513,7 +508,7 @@ class OpenConditionFile(ttk.Frame):
         `SeeFile()`
         """
         if len(self.selected_name.get()) > 0:
-            db_age, db_file = sql_funcs.get_files(self.selected_name.get())
+            db_age, db_file = project.get_files(self.selected_name.get())
 
             self.pack_forget()
             see_file = SeeFile(self.root, db_age, self.selected_name.get(), db_file)
@@ -536,8 +531,8 @@ class OpenMedicationFile(ttk.Frame):
         self.get_data()
 
     def get_data(self):
-        """gets all the names in databse and shows them in a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        """gets all the names in database and shows them in a combobox"""
+        self.names_list = project.get_all_names()
 
         self.create_widgets()
 
@@ -582,9 +577,8 @@ class OpenMedicationFile(ttk.Frame):
     def name_selected(self, event=None):
         """when a name is chosen, gets the data related to that name and shows the conditions in the combobox"""
         if len(self.selected_name.get()) > 0:
-            _, self.c = sql_funcs.get_files(self.selected_name.get())
+            _, self.condition = project.get_files(self.selected_name.get())
             del _
-            self.condition = [val for t in self.c for val in t]
 
             self.condition_options["values"] = self.condition
         else:
@@ -631,7 +625,7 @@ class SeeFile(ttk.Frame):
         )
 
         for i, conditions in enumerate(self.file):
-            self.file_text.insert(f"{i+3}.0", f"{conditions[0]}\n")
+            self.file_text.insert(f"{i + 3}.0", f"{conditions}\n")
 
         self.file_text["state"] = "disabled"
 
@@ -670,9 +664,9 @@ class SeeMedFile(ttk.Frame):
 
     def get_data(self):
         """get the medication of the condition and the age of the person for showing in text"""
-        self.meds = sql_funcs.get_med(self.condition, self.name)
+        self.meds = project.get_med(self.condition, self.name)
 
-        self.age, _ = sql_funcs.get_files(self.name)
+        self.age, _ = project.get_files(self.name)
         del _
 
         self.create_widgets()
@@ -693,7 +687,7 @@ class SeeMedFile(ttk.Frame):
         )
 
         for i, med in enumerate(self.meds):
-            self.med_text.insert(f"{i+3}.0", f"{med[0]}\n")
+            self.med_text.insert(f"{i + 3}.0", f"{med}\n")
 
         self.med_text["state"] = "disabled"
 
@@ -710,7 +704,7 @@ class SeeMedFile(ttk.Frame):
         open_medication_file = OpenMedicationFile(self.root)
 
     def text_to_speach(self):
-        """avtivate text to speach and hear the data"""
+        """activate text to speach and hear the data"""
         # tts is an object of TextToSpeach() class, see last lines for reference
         global tts
         tts.voice_activated(self.texts)
@@ -787,14 +781,14 @@ class EditPage(ttk.Frame):
 
     def get_data(self):
         """get a list of all names in database and show them in a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        self.names_list = project.get_all_names()
 
         self.create_widgets()
 
     def create_widgets(self):
         """
         one combobox to choose a name, four buttons that each gets you to a page foe editing different data:
-        one page foe editing name, one page for editing age, one page for condition and one page for medicine
+        one page for editing name, one page for editing age, one page for condition and one page for medicine
         buttons are deactivated until a name is chosen
         """
 
@@ -956,7 +950,7 @@ class EditNamePage(ttk.Frame):
             showinfo(title="error", message="please input the data")
             return
         elif not self.new_name.get().isnumeric():
-            sql_funcs.update_name(self.old_name, self.new_name.get())
+            project.update_name(self.old_name, self.new_name.get())
             self.destroy()
             edit_page = EditPage(self.root)
             showinfo(title="name change", message="name updated")
@@ -980,7 +974,7 @@ class EditAgePage(ttk.Frame):
 
     def get_data(self):
         """get the old age from database to show as instruction"""
-        self.old_age, _ = sql_funcs.get_files(self.name)
+        self.old_age, _ = project.get_files(self.name)
         del _
 
         self.create_widgets()
@@ -1017,7 +1011,7 @@ class EditAgePage(ttk.Frame):
     def save_age(self):
         """check if the data inputted is right, then save"""
         if self.new_age.get().isnumeric():
-            sql_funcs.update_age(self.name, int(self.new_age.get()))
+            project.update_age(self.name, int(self.new_age.get()))
             self.destroy()
             showinfo(title="age changed", message="age updated")
             edit_page = EditPage(self.root)
@@ -1042,10 +1036,8 @@ class EditConditionPage(ttk.Frame):
 
     def get_data(self):
         """get all the condition related to the name chosen in EditPage to show in a combobox"""
-        _, self.c = sql_funcs.get_files(self.name)
+        _, self.condition = project.get_files(self.name)
         del _
-        # list of list is flattened to a list
-        self.condition = [val for t in self.c for val in t]
 
         self.create_widgets()
 
@@ -1087,7 +1079,7 @@ class EditConditionPage(ttk.Frame):
     def save_condition(self):
         """check if inputted data is right, then save"""
         if len(self.selected_condition.get()) > 1 and len(self.new_condition.get()) > 1:
-            sql_funcs.update_condition(
+            project.update_condition(
                 self.selected_condition.get(), self.new_condition.get(), self.name
             )
             self.destroy()
@@ -1113,10 +1105,8 @@ class EditMedicationPage(ttk.Frame):
 
     def get_data(self):
         """get all the condition related to the name chosen in EditPage to be shown in a combobox"""
-        _, self.c = sql_funcs.get_files(self.name)
+        _, self.condition = project.get_files(self.name)
         del _
-        # list of lists is flattened into a list
-        self.condition = [val for t in self.c for val in t]
 
         self.create_widgets()
 
@@ -1181,16 +1171,16 @@ class EditMedicationPage(ttk.Frame):
         """
         if len(self.chosen_condition.get()) > 0:
             self.condition = self.chosen_condition.get()
-            self.m = sql_funcs.get_med(self.chosen_condition.get(), self.name)
-            meds = [val for i in self.m for val in i]
-            self.medicine_options["values"] = meds
+            self.meds = project.get_med(self.chosen_condition.get(), self.name)
+
+            self.medicine_options["values"] = self.meds
         else:
             self.medicine_options["values"] = []
 
     def save_data(self):
         """check if the data inputted is right, then save it"""
         if len(self.old_med_var.get()) > 0 and len(self.new_med_var.get()) > 0:
-            sql_funcs.update_med(
+            project.update_med(
                 self.name,
                 self.condition,
                 self.old_med_var.get(),
@@ -1215,7 +1205,7 @@ class DeletePage(ttk.Frame):
 
     def get_data(self):
         """get a list of all names in database and show in a combobox"""
-        self.names_list = sql_funcs.get_all_names()
+        self.names_list = project.get_all_names()
 
         self.create_widgets()
 
@@ -1323,13 +1313,10 @@ class DeletePage(ttk.Frame):
         """when a name is selected, get all the condition related to that name and get them in condition combobox"""
         if len(self.chosen_name.get()) > 0:
             # get data from database
-            _, self.c = sql_funcs.get_files(self.chosen_name.get())
+            _, self.condition = project.get_files(self.chosen_name.get())
             del _
 
-            # flatten the list of lists into a list
-            condition = [val for t in self.c for val in t]
-
-            self.condition_options["values"] = condition
+            self.condition_options["values"] = self.condition
 
     def con_selected(self, event=None):
         """
@@ -1338,12 +1325,10 @@ class DeletePage(ttk.Frame):
         """
         if len(self.chosen_condition.get()) > 0:
             # get data from database
-            self.m = sql_funcs.get_med(
+            self.meds = project.get_med(
                 self.chosen_condition.get(), self.chosen_name.get()
             )
-            # flatten the list of lists into a list
-            meds = [val for i in self.m for val in i]
-            self.medicine_options["values"] = meds
+            self.medicine_options["values"] = self.meds
 
     def delete_func(self):
         """
@@ -1378,7 +1363,7 @@ class DeletePage(ttk.Frame):
 
     def delete_file(self):
         """if user has chosen to delete a file, delete the whole file"""
-        self.del_info = sql_funcs.full_file_delete(self.chosen_name.get())
+        self.del_info = project.full_file_delete(self.chosen_name.get())
         if self.del_info == "file deleted":
             self.destroy()
             showinfo(title="deleted file", message="your file has been deleted")
@@ -1386,7 +1371,7 @@ class DeletePage(ttk.Frame):
 
     def delete_condition(self):
         """if user has chosen to delete a condition, delete it"""
-        self.del_info = sql_funcs.condition_delete(
+        self.del_info = project.condition_delete(
             self.chosen_name.get(), self.chosen_condition.get()
         )
         if self.del_info == "condition deleted":
@@ -1396,7 +1381,7 @@ class DeletePage(ttk.Frame):
 
     def delete_med(self):
         """if the user has chosen to delete a medicine, delete it"""
-        self.del_info = sql_funcs.medicine_delete(
+        self.del_info = project.delete_medicine(
             self.chosen_name.get(), self.chosen_condition.get(), self.chosen_med.get()
         )
 
