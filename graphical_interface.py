@@ -39,6 +39,7 @@ class App(tk.Tk):
         self.resizable(False, False)
         self.style = ttk.Style()
         self.style.theme_use("xpnative")
+        self.iconbitmap("./icon.ico")
 
         # make the database
         project.main()
