@@ -8,6 +8,15 @@ import pyttsx3
 windll.shcore.SetProcessDpiAwareness(1)
 
 
+def main():
+    # tts is an object of TextToSpeach class, it activates the engine in the background (see line 20)
+    tts = TextToSpeach()
+
+    # app is an object of App class, it starts the gui app (see line 32)
+    app = App()
+    app.mainloop()
+
+
 class TextToSpeach:
     def __init__(self):
         """initiate the engine for text to speach"""
@@ -1392,9 +1401,4 @@ class DeletePage(ttk.Frame):
 
 
 if __name__ == "__main__":
-    # tts is an object of TextToSpeach class, it activates the engine in the background (see line 11)
-    tts = TextToSpeach()
-
-    # app is an object of App class, it starts the gui app (see line 23)
-    app = App()
-    app.mainloop()
+    main()
