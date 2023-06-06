@@ -72,7 +72,7 @@
 
 
 ### .ico file
-##### icon.ico (i gave it that name) it's just an icon being used inside graphical_interface.py.
+##### icon.ico (yup, i gave it that name) it's just an icon being used inside graphical_interface.py.
 
 
 
