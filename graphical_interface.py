@@ -882,7 +882,6 @@ class EditPage(ttk.Frame):
             self.condition_button["state"] = "normal"
             self.med_button["state"] = "normal"
 
-            self.selected_name = self.selected_name.get()
         else:
             self.name_button["state"] = "disabled"
             self.age_button["state"] = "disabled"
@@ -892,22 +891,22 @@ class EditPage(ttk.Frame):
     def edit_name(self):
         """a page to edit name"""
         self.pack_forget()
-        edit_name_page = EditNamePage(self.root, self.selected_name)
+        edit_name_page = EditNamePage(self.root, self.selected_name.get())
 
     def edit_age(self):
         """a page to edit age"""
         self.pack_forget()
-        edit_age_page = EditAgePage(self.root, self.selected_name)
+        edit_age_page = EditAgePage(self.root, self.selected_name.get())
 
     def edit_condition(self):
         """a page to edit condition"""
         self.pack_forget()
-        edit_condition_page = EditConditionPage(self.root, self.selected_name)
+        edit_condition_page = EditConditionPage(self.root, self.selected_name.get())
 
     def edit_med(self):
         """a page to edit medication"""
         self.pack_forget()
-        edit_medication_page = EditMedicationPage(self.root, self.selected_name)
+        edit_medication_page = EditMedicationPage(self.root, self.selected_name.get())
 
 
 class EditNamePage(ttk.Frame):
