@@ -3,38 +3,41 @@
 ## Description:
 
 ### an overview of the things this app does:
-##### medical record is a gui app that saves the medical record of any number of users and displays it to them if they want, edits the data in a file and deletes data.
-##### the records may contain a name (must be unique), an age, any number of conditions for each name, and any number of medication for each condition.
+##### medical record is a gui app that can save the medical records of any number of users and displays it to them if they want, edits the saved data and deletes them if needed.
+##### the records may contain a name (must be unique), an age, any number of conditions for each name and any number of medication for each condition.
 ##### records can be seen via text and can be heard via a text to voice engine.
 ##### any part of a record (name, age, condition, medication) can be edited in the page designed for data editing.
-##### and user has three delete options: full file delete, condition delete and medicine delete.
+##### and user has three deleting options: full file deleting, condition deleting and medicine deleting.
 
 
 ### adding data:
-##### there is two paged designed for adding new data, a page for making a file, in which the user inputs name, age, and any number of conditions they want (separated with a comma and a space).
-##### to lower the complixity of design making file and adding new condition to existing files is done in the same page, which can be updated for better user experience.
-##### and a page for adding medication, in which the user chooses a name and a condition and adds any number of medicine related to the specified condition.
+##### there is two pages that are designed for adding new data; 
+##### first page for adding a file, in which the user inputs name, age, and any number of conditions they want (separated with a comma and a space).
+##### to lower the complixity of design, creating a file and adding new condition to existing files is done in the same page, which can/should be updated for better user experience.
+##### second page for saving medication, in which the user chooses a name and a condition and adds any number of medicine related to the specified condition.
 
 
 ### display data:
-##### there is two page designed for displaying the saved records to user.
-##### a condition page in which user will choose a name and then will see the name, age and all the conditions saved under that name.
-##### a medicine page in which the user will choose a name and a condition then will see the name, age, chosen condition and all the medication saved under that condition.
-##### there is a button that activates text to voice and reads the file for the user in both pages.
+##### there is two pages that are designed to display the saved records to user.
+##### first a condition page in which user will choose a name and open the file.
+##### the name, age and all the conditions saved under that name will be shown.
+##### second a medicine page in which the user will choose a name and a condition and open the text. 
+##### the name, age, chosen condition and all the medication saved under that condition will be displayed.
+#### there is a button that activates text to voice and all the data will be read by a robotic voice.
 
 
 ### edit data:
 ##### in the Edit page, user will choose a name and then select a page for the kind of data that needs editing; there is four pages in total.
-##### first page is for editing the name, it simply displays the name chosen, and asks user for a new name
-##### second page is for editing age, it displays the age already saved, and asks for a new age.
-##### third page is for editing conditions, it asks the user to chose which one of the conditions saved under that name he wants to edit, then asks for a new condition.
-##### the fourth page is for editing medications, it asks the user to choose one of the conditions saved under chosen name, and then to choose a medicine saved under that condition, then input a new medicine.
+##### first page is for editing the name, it simply displays the name chosen, and asks user to input the new name.
+##### second page is for editing age, it displays the name and the age that is already saved, and requests an input to update age.
+##### third page is for editing conditions, it asks the user to select which one of the conditions registered under that name he wants to update, then asks for an updated sentance.
+##### the fourth page is for editing medications, it require the user to select one of the conditions saved under chosen name, and then to choose a medicine registered under that condition, then input a fixed version of that medicine.
 
 
 ### delete data:
-##### in the delete page, user first chooses what kinf of deletation he want to perform, there are three types of deleting: full file delete, condition delete, medicine delete.
-##### if the user chooses full file delete, he only inputs a name and all the data saved under that name will be deleted.
-##### if the user chooses condition delete, he inputs a name and a condition that is saved under that name and deletes that condition and all the medicine saved under it.
+##### in the delete page, user first chooses what kind of deletation he want to perform, there are three types of deleting: full file deleting, condition deleting, medicine deleting.
+##### if the user chooses to delete a whole file, he just has to select a name and all the data saved under that name will be deleted.
+##### if the user wants to make a condition disappear, he picks a name and a condition that is filed under that name and sends that condition and all the medicines registered under it to the void.
 ##### if the user chooses medicine delete, he inputs a name and a condition saved under that name and a medicine saved under that condition, then deletes that one data.
 
 
