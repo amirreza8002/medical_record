@@ -996,8 +996,11 @@ class EditAgePage(ttk.Frame):
         self.info_1 = ttk.Label(self, text="the age you are changing is: ")
         self.pack()
 
-        self.info_2 = ttk.Label(self, text=f"{self.old_age}", foreground="red")
-        self.info_2.pack(pady=(0, 20))
+        self.info_2 = ttk.Label(self, text=f"{self.name}", foreground="blue")
+        self.info_2.pack()
+
+        self.info_3 = ttk.Label(self, text=f"is saved with \"{self.old_age}\" as age", foreground="red")
+        self.info_3.pack(pady=(0, 20))
 
         self.sep = ttk.Separator(self, orient="horizontal")
         self.sep.pack(fill="x")
@@ -1037,7 +1040,7 @@ class EditConditionPage(ttk.Frame):
         self.name = name
 
         self.root = root
-        self.root.geometry("300x250")
+        self.root.geometry("300x315")
 
         self.pack(fill="both")
 
@@ -1054,6 +1057,12 @@ class EditConditionPage(ttk.Frame):
         """one combobox that shows all conditions to be chosen, one entry to edit the chosen condition"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
+
+        self.info_1 = ttk.Label(self, text=f"{self.name}", foreground="blue")
+        self.info_1.pack()
+
+        self.sep = ttk.Separator(self, orient="horizontal")
+        self.sep.pack(fill="x", pady=(20, 10))
 
         self.inst = ttk.Label(self, text="select the condition you want to update")
         self.inst.pack()
@@ -1104,7 +1113,7 @@ class EditMedicationPage(ttk.Frame):
     def __init__(self, root, name):
         super().__init__(root)
         self.root = root
-        self.root.geometry("300x300")
+        self.root.geometry("300x340")
 
         self.name = name
 
@@ -1128,6 +1137,12 @@ class EditMedicationPage(ttk.Frame):
         """
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), padx=10, anchor="w")
+
+        self.info_1 = ttk.Label(self, text=f"{self.name}", foreground="blue")
+        self.info_1.pack()
+
+        self.sep = ttk.Separator(self, orient="horizontal")
+        self.sep.pack(fill="x", pady=(20, 10))
 
         self.inst_1 = ttk.Label(self, text="choose the condition")
         self.inst_1.pack()
@@ -1179,7 +1194,6 @@ class EditMedicationPage(ttk.Frame):
         get all the medication related to that condition and show them in second combobox
         """
         if len(self.chosen_condition.get()) > 0:
-            self.condition = self.chosen_condition.get()
             self.meds = project.get_med(self.chosen_condition.get(), self.name)
 
             self.medicine_options["values"] = self.meds
@@ -1191,13 +1205,16 @@ class EditMedicationPage(ttk.Frame):
         if len(self.old_med_var.get()) > 0 and len(self.new_med_var.get()) > 0:
             project.update_med(
                 self.name,
-                self.condition,
+                self.condition.get(),
                 self.old_med_var.get(),
                 self.new_med_var.get(),
             )
             self.destroy()
             showinfo(title="medicine changed", message="medicine updated")
             edit_page = EditPage(self.root)
+
+        else:
+            showinfo(title="missing data", message="please input data")
 
 
 class DeletePage(ttk.Frame):
@@ -1326,6 +1343,8 @@ class DeletePage(ttk.Frame):
             del _
 
             self.condition_options["values"] = self.condition
+        else:
+            self.condition_options["values"] = []
 
     def con_selected(self, event=None):
         """
@@ -1338,6 +1357,9 @@ class DeletePage(ttk.Frame):
                 self.chosen_condition.get(), self.chosen_name.get()
             )
             self.medicine_options["values"] = self.meds
+
+        else:
+            self.medicine_options["values"] = []
 
     def delete_func(self):
         """
@@ -1352,6 +1374,7 @@ class DeletePage(ttk.Frame):
             )
             if self.answer:
                 self.delete_file()
+
         elif self.selected_option.get() == "condition":
             self.answer = askokcancel(
                 title="deleting data",
