@@ -39,6 +39,7 @@
 ##### if the user chooses to delete a whole file, he just has to select a name and all the data saved under that name will be deleted.
 ##### if the user wants to make a condition disappear, he picks a name and a condition that is filed under that name and sends that condition and all the medicines registered under it to the void.
 ##### if the user chooses medicine delete, he inputs a name and a condition saved under that name and a medicine saved under that condition, then deletes that one data.
+#### any attempt to delete a data is componied with a conformation message before finalization.
 
 
 ## explroing the code
@@ -47,9 +48,10 @@
 ### .py files:
 
 #### project.py
-##### project.py is the main functionality of medical record.
-##### it contains all the code running the sql database, from making the database to deleting files, everything is done in this file.
-##### the main function of project.py creates the database and is ran as soon as the gui starts running.
+##### project.py is the back bone of medical record.
+##### it contains all the code that runs the sql database, from making the database to deleting files, everything is done in this file.
+##### the main function of project.py creates the database;
+##### it rans as soon as the gui starts running.
 ##### other functions run when the corresponding buttons are clicked or options have been chosen.
 
 
