@@ -80,7 +80,12 @@
 ##### icon.ico (yup, i gave it that name) it's just an icon being used inside graphical_interface.py.
 
 
+## future work
 
+##### 1. deactivating `age` entry when adding data to existing files inside the adding condition page.
+##### 2. ability to add pictures for conditions and medications (such as MRI pictures and...).
+##### 3. the text widget that displays the files should change size dynamically based on how big a file is.
+##### 4. better graphical interface.
 
 
 
