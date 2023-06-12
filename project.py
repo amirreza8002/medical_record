@@ -1,5 +1,4 @@
 import sqlite3
-import graphical_interface
 
 def main():
     con = sqlite3.connect("test.db")
@@ -371,4 +370,4 @@ def delete_medicine(name, condition, med):
 
 
 if __name__ == "__main__":
-    graphical_interface.main()
+    main()

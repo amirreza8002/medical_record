@@ -15,6 +15,15 @@ def main():
     test_get_all_names()
     test_insert_med()
     test_get_files()
+    test_get_med()
+    test_update_name()
+    test_update_age()
+    test_update_condition()
+    test_update_med()
+    test_full_file_delete()
+    test_condition_delete()
+    test_delete_medicine()
+
 
 def test_insert_name():
     """
