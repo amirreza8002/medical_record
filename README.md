@@ -62,13 +62,13 @@
 ##### for the sake of this test, some code has been added to the project.py file, which weren't necessary due to gui design stopping a lot of wrong data being inputted.
 
 
-#### graphical_interface.py
-##### acting as the face of the project, graphical_interface.py is a tkinter based oop code that gives the user an easy interface to work with.
+#### User_interface.py
+##### acting as the face of the project, User_interface.py is a tkinter based oop code that gives the user an easy interface to work with.
 ##### due to the nature of this app, using a gui seemed inevitable.
 ##### but due to the nature of me not being a graphic designer, I have made a simple but easy to use interface so any user can benefit from this kind of app.
-##### graphical_interface.py also contains some code that stop the user from inputting wrong or empty data.
-##### it also contains the code for the text to voice engine.
-##### it might be worth knowing that I first wrote the gui using functions, because I like functions more and have a better understanding of them. but due to suggestions I changed the code to oop, plus added more stuff that it can do.
+##### User_interface.py also contains some code that stop the user from inputting wrong or empty data.
+##### as well as containing the code used for the text to voice engine.
+##### it might be worth knowing that the gui was first wrote using functions, because I like functions more and have a better understanding of them. but due to suggestions I changed the code to oop, plus added more stuff to it.
 
 
 #### main.py

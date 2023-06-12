@@ -1,3 +1,3 @@
-import graphical_interface
+import User_interface
 
-graphical_interface.main()
+User_interface.main()
