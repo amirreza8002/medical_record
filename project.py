@@ -1,5 +1,6 @@
 import sqlite3
 
+
 def main():
     con = sqlite3.connect("test.db")
     cur = con.cursor()
@@ -23,7 +24,20 @@ def main():
     con.close()
 
 
-def insert_name(name, age):
+def check_name(check_n):
+    """checks if the name is in the database or not, returns a string"""
+    con = sqlite3.connect("test.db")
+    cur = con.cursor()
+
+    check = cur.execute("SELECT name FROM Person WHERE name = ?", (check_n,)).fetchone()
+
+    if check is None:
+        return "new"
+    else:
+        return "old"
+
+
+def insert_name(name, age=0):
     # start the database connection
     con = sqlite3.connect("test.db")
     cur = con.cursor()
