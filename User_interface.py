@@ -13,8 +13,8 @@ def main():
     tts = TextToSpeach()
 
     # app is an object of App class, it starts the gui app (see line 32)
-    app = App()
-    app.mainloop()
+    root = App()
+    root.mainloop()
 
 
 class TextToSpeach:
@@ -58,7 +58,7 @@ class MainFrame(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("320x300")
+        self.root.geometry("320x270")
 
         self.pack(fill="both", padx=10)
 
@@ -122,7 +122,7 @@ class AddingPage(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("270x250")
+        self.root.geometry("270x200")
         self.pack(fill="both", padx=10)
 
         self.create_widgets()
@@ -180,7 +180,7 @@ class ConditionFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("360x390")
+        self.root.geometry("360x370")
         self.pack(fill="both", padx=10)
 
         self.get_data()
@@ -192,7 +192,7 @@ class ConditionFile(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        """combobox for choosing/adding name, entrys for adding age and condition(s)"""
+        """combobox for choosing/adding name, entries for adding age and condition(s)"""
         self.back_button = ttk.Button(
             self, text="<", command=self.back_button, width=5, takefocus=1
         )
@@ -209,19 +209,10 @@ class ConditionFile(ttk.Frame):
             self, textvariable=self.name_var, values=self.names_list
         )
         self.name_combo.pack(pady=(0, 10))
+        self.name_combo.bind("<FocusOut>", self.new_or_old)
 
         self.sep_1 = ttk.Separator(self, orient="horizontal")
         self.sep_1.pack(fill="x")
-
-        self.age_label = ttk.Label(self, text="please enter the age (with numbers)")
-        self.age_label.pack(pady=(10, 7))
-
-        self.age_var = tk.StringVar()
-        self.age_entry = ttk.Entry(self, textvariable=self.age_var)
-        self.age_entry.pack()
-
-        self.sep_2 = ttk.Separator(self, orient="horizontal")
-        self.sep_2.pack(fill="x", pady=10)
 
         self.inst_1 = ttk.Label(self, text="please enter the condition(s)")
         self.inst_1.pack()
@@ -234,7 +225,17 @@ class ConditionFile(ttk.Frame):
         self.condition_entry = ttk.Entry(self, textvariable=self.condition_var)
         self.condition_entry.pack()
 
-        self.save_button = ttk.Button(self, text="Save", command=self.save_info)
+        self.sep_2 = ttk.Separator(self, orient="horizontal")
+        self.sep_2.pack(fill="x", pady=10)
+
+        self.age_label = ttk.Label(self, text="please enter the age (with numbers)")
+        self.age_label.pack(pady=(10, 7))
+
+        self.age_var = tk.StringVar()
+        self.age_entry = ttk.Entry(self, textvariable=self.age_var)
+        self.age_entry.pack()
+
+        self.save_button = ttk.Button(self, text="Save", command=self.validate_info, takefocus=True)
         self.save_button.pack(pady=(15, 0))
 
     def back_button(self):
@@ -242,41 +243,73 @@ class ConditionFile(ttk.Frame):
         self.pack_forget()
         adding_page = AddingPage(self.root)
 
-    def save_info(self):
-        """save the information in database by passing in the name and age and condition(s)"""
-        name = self.name_var.get().strip()
-        age = self.age_var.get().strip()
-        condition = self.condition_var.get().strip()
+    def new_or_old(self, event=None):
+        """
+        disable the age entry if the name entered is on the database and this is an act to update the file
+        since we don't need age to update files
+        """
+        check = project.check_name(self.name_var.get())
+        if check == "old":
+            self.age_entry["state"] = "disable"
+            self.age_label.config(text="no need for age when updating a file", foreground="blue")
+            # since (self.age_label["state"] == "disable") didn't work as needed, need this for `validate_info(self)`
+            self.update_state = True
+
+        else:
+            self.age_entry["state"] = "normal"
+            self.age_label.config(text="please enter the age (with numbers)", foreground="black")
+            self.update_state = False
+
+    def validate_info(self):
+        # check if age entry is active or not
+        # if it's not active (so we have a file in database we want to update here):
+        if self.update_state:
+            # since project.insert_name() doesn't do anything if name is already in there,
+            # so just a default value suffices here.
+            self.age = 0
+
+        # if it is active (so we don't have a file and we are making a new one):
+        elif self.update_state == False:
+            self.age = self.age_var.get().strip()
+            if self.age.isnumeric():
+                self.age = int(self.age)
+
+            else:
+                self.age_label["text"] = "please use numbers for age"
+                self.age_label["foreground"] = "red"
+                return
+
+        self.name = self.name_var.get().strip()
+        self.condition = self.condition_var.get().strip()
 
         # checking that the information is provided
-        if len(name) <= 0 or len(age) <= 0 or len(condition) <= 0:
+        if len(self.name) <= 0 or len(self.condition) <= 0:
             showinfo(title="error", message="please input data")
             return
 
-        if name.isnumeric():
+        if self.name.isnumeric():
             self.name_label["text"] = "please use words for name"
             self.name_label["foreground"] = "red"
-
-        if age.isnumeric():
-            age = int(age)
-        else:
-            self.age_label["text"] = "please use numbers for age"
-            self.age_label["foreground"] = "red"
             return
 
-        if ", " in condition:
+        if ", " in self.condition:
             # if there is more than one condition
-            condition = condition.split(", ")
+            condition = self.condition.split(", ")
 
-        elif "," in condition:
+        elif "," in self.condition:
             # checking for mistakes
             self.condition_label["text"] = "please use comma and a space afterwards"
             self.condition_label["foreground"] = "red"
             return
 
+        self.save_info()
+
+    def save_info(self):
+        """save the information in database by passing in the name and age and condition(s)"""
         # if no error
-        save_file = project.insert_name(name, age)
-        save_condition = project.insert_condition(condition, name)
+        save_file = project.insert_name(self.name, self.age)
+
+        save_condition = project.insert_condition(self.condition, self.name)
 
         if save_file is not None and save_condition is not None:
             self.saving_info(save_file, save_condition)
@@ -309,7 +342,7 @@ class MedicineFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("370x370")
+        self.root.geometry("370x330")
         self.pack(fill="both", padx=10)
 
         self.get_data()
@@ -424,7 +457,7 @@ class OpenFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("350x260")
+        self.root.geometry("300x205")
 
         self.pack(fill="both", padx=10)
 
@@ -472,7 +505,7 @@ class OpenConditionFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("350x250")
+        self.root.geometry("300x200")
 
         self.pack(fill="both", padx=10)
 
@@ -492,7 +525,7 @@ class OpenConditionFile(ttk.Frame):
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
         self.back_button.pack(pady=(2, 10), anchor="w")
 
-        self.inst = ttk.Label(self, text="select the person's name")
+        self.inst = ttk.Label(self, text="select the person's name:")
         self.inst.pack(pady=(0, 10))
 
         self.selected_name = tk.StringVar()
@@ -534,7 +567,7 @@ class OpenMedicationFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("300x300")
+        self.root.geometry("300x245")
 
         self.pack(fill="both", padx=10)
 
@@ -610,7 +643,7 @@ class SeeFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("600x705")
+        self.root.geometry("600x708")
 
         self.pack()
 
@@ -627,7 +660,7 @@ class SeeFile(ttk.Frame):
         )
         self.back_button.pack(anchor="w", pady=3, padx=10)
 
-        self.file_text = tk.Text(self, height=30, border=5)
+        self.file_text = tk.Text(self, height=39, border=5)
         self.file_text.pack()
 
         self.file_text.insert(
@@ -664,7 +697,7 @@ class SeeMedFile(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("600x705")
+        self.root.geometry("600x708")
 
         self.pack()
         self.name = name
@@ -688,7 +721,7 @@ class SeeMedFile(ttk.Frame):
         )
         self.back_button.pack(anchor="w", pady=3, padx=10)
 
-        self.med_text = tk.Text(self, height=30, border=5)
+        self.med_text = tk.Text(self, height=39, border=5)
         self.med_text.pack()
 
         self.med_text.insert(
@@ -727,7 +760,7 @@ class EditDelete(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("352x250")
+        self.root.geometry("330x220")
         self.pack(fill="both", padx=10)
 
         self.create_widgets()
@@ -783,7 +816,7 @@ class EditPage(ttk.Frame):
         super().__init__(root)
 
         self.root = root
-        self.root.geometry("420x500")
+        self.root.geometry("410x460")
 
         self.pack(fill="both")
 
@@ -917,7 +950,7 @@ class EditNamePage(ttk.Frame):
         self.old_name = old_name
 
         self.root = root
-        self.root.geometry("300x250")
+        self.root.geometry("280x220")
 
         self.pack(fill="both")
 
@@ -926,7 +959,7 @@ class EditNamePage(ttk.Frame):
     def create_widgets(self):
         """an entry to enter the new name"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
-        self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
+        self.back_button.pack(pady=(3, 7), padx=10, anchor="w")
 
         self.info_1 = ttk.Label(self, text="the name you are changing is: ")
         self.pack()
@@ -938,11 +971,11 @@ class EditNamePage(ttk.Frame):
         self.sep = ttk.Separator(self, orient="horizontal")
         self.sep.pack(fill="x")
 
-        self.inst = ttk.Label(self, text="enter the new name:")
+        self.inst = ttk.Label(self, text="Enter the new name:")
         self.inst.pack(pady=10)
 
         self.new_name = tk.StringVar()
-        self.get_name = ttk.Entry(self, textvariable=self.new_name)
+        self.get_name = ttk.Entry(self, textvariable=self.new_name, width=30)
         self.get_name.pack()
 
         self.save_button = ttk.Button(self, text="Save", command=self.save_name)
@@ -976,7 +1009,7 @@ class EditAgePage(ttk.Frame):
         self.name = name
 
         self.root = root
-        self.root.geometry("300x250")
+        self.root.geometry("300x230")
         self.pack(fill="both")
 
         self.get_data()
@@ -991,25 +1024,24 @@ class EditAgePage(ttk.Frame):
     def create_widgets(self):
         """an entry to get new age"""
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
-        self.back_button.pack(pady=(3, 13), padx=10, anchor="w")
+        self.back_button.pack(pady=(3, 7), padx=10, anchor="w")
 
-        self.info_1 = ttk.Label(self, text="the age you are changing is: ")
-        self.pack()
+        self.info_1 = ttk.Label(self, text=f"{self.name}", foreground="blue")
+        self.info_1.pack()
 
-        self.info_2 = ttk.Label(self, text=f"{self.name}", foreground="blue")
-        self.info_2.pack()
-
-        self.info_3 = ttk.Label(self, text=f"is saved with \"{self.old_age}\" as age", foreground="red")
-        self.info_3.pack(pady=(0, 20))
+        self.info_2 = ttk.Label(
+            self, text=f'is saved with "{self.old_age}" as age', foreground="red"
+        )
+        self.info_2.pack(pady=(0, 20))
 
         self.sep = ttk.Separator(self, orient="horizontal")
         self.sep.pack(fill="x")
 
-        self.inst = ttk.Label(self, text="enter the new age:")
+        self.inst = ttk.Label(self, text="Enter the new age:")
         self.inst.pack(pady=10)
 
         self.new_age = tk.StringVar()
-        self.get_age = ttk.Entry(self, textvariable=self.new_age)
+        self.get_age = ttk.Entry(self, textvariable=self.new_age, width=30)
         self.get_age.pack()
 
         self.save_button = ttk.Button(self, text="Save", command=self.save_age)
@@ -1040,7 +1072,7 @@ class EditConditionPage(ttk.Frame):
         self.name = name
 
         self.root = root
-        self.root.geometry("300x315")
+        self.root.geometry("300x290")
 
         self.pack(fill="both")
 
@@ -1079,7 +1111,7 @@ class EditConditionPage(ttk.Frame):
         self.sep = ttk.Separator(self, orient="horizontal")
         self.sep.pack(fill="x")
 
-        self.inst_2 = ttk.Label(self, text="enter the new condition:")
+        self.inst_2 = ttk.Label(self, text="Enter the new condition:")
         self.inst_2.pack(pady=(15, 5))
 
         self.new_condition = tk.StringVar()
@@ -1113,7 +1145,7 @@ class EditMedicationPage(ttk.Frame):
     def __init__(self, root, name):
         super().__init__(root)
         self.root = root
-        self.root.geometry("300x340")
+        self.root.geometry("300x320")
 
         self.name = name
 
@@ -1136,13 +1168,13 @@ class EditMedicationPage(ttk.Frame):
         an entry to get the new medicine
         """
         self.back_button = ttk.Button(self, text="<", width=5, command=self.back_button)
-        self.back_button.pack(pady=(2, 10), padx=10, anchor="w")
+        self.back_button.pack(pady=(2, 10), padx=7, anchor="w")
 
         self.info_1 = ttk.Label(self, text=f"{self.name}", foreground="blue")
         self.info_1.pack()
 
         self.sep = ttk.Separator(self, orient="horizontal")
-        self.sep.pack(fill="x", pady=(20, 10))
+        self.sep.pack(fill="x", pady=(20, 15))
 
         self.inst_1 = ttk.Label(self, text="choose the condition")
         self.inst_1.pack()
@@ -1154,7 +1186,7 @@ class EditMedicationPage(ttk.Frame):
             values=self.condition,
             state="readonly",
         )
-        self.condition_options.pack(pady=(0, 15))
+        self.condition_options.pack(pady=(0, 20))
 
         self.condition_options.bind("<<ComboboxSelected>>", self.condition_selected)
 
@@ -1162,13 +1194,13 @@ class EditMedicationPage(ttk.Frame):
         self.sep_1.pack(fill="x")
 
         self.inst_2 = ttk.Label(self, text="choose the medicine")
-        self.inst_2.pack()
+        self.inst_2.pack(pady=(0, 0))
 
         self.old_med_var = tk.StringVar()
         self.medicine_options = ttk.Combobox(
             self, textvariable=self.old_med_var, state="readonly"
         )
-        self.medicine_options.pack(pady=(0, 10))
+        self.medicine_options.pack(pady=(0, 15))
 
         self.sep_2 = ttk.Separator(self, orient="horizontal")
         self.sep_2.pack(fill="x")
@@ -1178,7 +1210,7 @@ class EditMedicationPage(ttk.Frame):
 
         self.new_med_var = tk.StringVar()
         self.new_med = ttk.Entry(self, textvariable=self.new_med_var)
-        self.new_med.pack(pady=(0, 10))
+        self.new_med.pack(pady=(0, 15))
 
         self.save = ttk.Button(self, text="Save", command=self.save_data)
         self.save.pack()
@@ -1223,7 +1255,7 @@ class DeletePage(ttk.Frame):
     def __init__(self, root):
         super().__init__(root)
         self.root = root
-        self.root.geometry("360x370")
+        self.root.geometry("360x350")
 
         self.pack(fill="both", padx=10)
 
@@ -1295,7 +1327,7 @@ class DeletePage(ttk.Frame):
         self.condition_options = ttk.Combobox(
             self, textvariable=self.chosen_condition, state="disable"
         )
-        self.condition_options.pack()
+        self.condition_options.pack(pady=(10, 0))
 
         self.condition_options.bind("<<ComboboxSelected>>", self.con_selected)
 
@@ -1309,7 +1341,7 @@ class DeletePage(ttk.Frame):
         self.medicine_options.pack()
 
         self.delete_button = ttk.Button(self, text="delete", command=self.delete_func)
-        self.delete_button.pack(anchor="s", pady=10)
+        self.delete_button.pack(anchor="s", pady=15)
 
     def back_button(self):
         """go to previous page"""
