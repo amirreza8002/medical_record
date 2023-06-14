@@ -13,7 +13,8 @@
 ### adding data:
 ##### there is two pages that are designed for adding new data; 
 ##### first page for adding a file, in which the user inputs name, age, and any number of conditions they want (separated with a comma and a space).
-##### to lower the complexity of design, creating a file and adding new condition to existing files is done in the same page, which can/should be updated for better user experience.
+##### to lower the complexity of design, creating a file and adding new condition to existing files is done in the same page;
+##### although the entry for age gets deactivated if user wants to update an existing file.
 ##### second page for saving medication, in which the user chooses a name and a condition and adds any number of medicine related to the specified condition.
 
 
@@ -82,10 +83,10 @@
 
 ## future work
 
-##### 1. deactivating `age` entry when adding data to existing files inside the adding condition page.
-##### 2. ability to add pictures for conditions and medications (such as MRI pictures and...).
-##### 3. the text widget that displays the files should change size dynamically based on how big a file is.
-##### 4. better graphical interface.
+##### 1. ability to add pictures for conditions and medications (such as MRI pictures and...).
+##### 2. the text widget that displays the files should change size dynamically based on how big a file is.
+##### 3. better graphical interface.
+##### 4. window size change based on users desktop (now the size gets messed up when using a different computer).
 
 
 
