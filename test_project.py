@@ -97,7 +97,10 @@ def test_insert_med():
     """
 
     assert project.insert_med("john", "cold", "diphenhydramine") == "diphenhydramine"
-    assert project.insert_med("david", "headache", ["codeine", "aspirin"]) == ["codeine", "aspirin"]
+    assert project.insert_med("david", "headache", ["codeine", "aspirin"]) == [
+        "codeine",
+        "aspirin",
+    ]
 
     # if inputted med is not str
     assert project.insert_med("david", "headache", 5) is None
@@ -186,7 +189,9 @@ def test_full_file_delete():
     con = sqlite3.connect("test.db")
     cur = con.cursor()
     # get the id of the name from database
-    get_id = cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone()[0]
+    get_id = cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone()[
+        0
+    ]
 
     # get the id of all the conditions that name has
     con_id = cur.execute(
@@ -197,16 +202,29 @@ def test_full_file_delete():
 
     # name isn't in the database anymore
     assert project.get_all_names() == ["john", "joe", "david"]
-    assert cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone() is None
+    assert (
+        cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone()
+        is None
+    )
 
     # no condition registered under the id of the deleted name
-    assert cur.execute("SELECT id FROM Condition WHERE person_id = ?", (get_id,)).fetchall() == []
+    assert (
+        cur.execute(
+            "SELECT id FROM Condition WHERE person_id = ?", (get_id,)
+        ).fetchall()
+        == []
+    )
 
     # flatten the list of lists to a list, we got this data a few lines above
     con_id = [val for i in con_id for val in i]
     # loop over the condition id and see if the medicine related to them are still available
     for c in con_id:
-        assert cur.execute("SELECT medicine FROM Medicine WHERE condition_id = ?", (c,)).fetchone() is None
+        assert (
+            cur.execute(
+                "SELECT medicine FROM Medicine WHERE condition_id = ?", (c,)
+            ).fetchone()
+            is None
+        )
 
     cur.close()
     con.close()
@@ -229,7 +247,9 @@ def test_condition_delete():
     cur = con.cursor()
 
     # get id of condition for further check
-    name_id = cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone()[0]
+    name_id = cur.execute("SELECT id FROM Person WHERE name = ?", ("jane",)).fetchone()[
+        0
+    ]
     con_id = cur.execute(
         "SELECT id FROM Condition WHERE condition = ? AND person_id = ?",
         ("cold", name_id),
@@ -241,9 +261,12 @@ def test_condition_delete():
     assert project.get_files("jane") == (26, ["headache"])
 
     # checking if the medicine is deleted as well
-    assert cur.execute(
-        "SELECT medicine FROM Medicine WHERE condition_id = ?", (con_id,)
-    ).fetchall() == []
+    assert (
+        cur.execute(
+            "SELECT medicine FROM Medicine WHERE condition_id = ?", (con_id,)
+        ).fetchall()
+        == []
+    )
 
 
 def test_delete_medicine():
@@ -259,5 +282,5 @@ def test_delete_medicine():
     assert project.get_med("headache", "jane") == ["aspirin"]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

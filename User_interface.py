@@ -9,10 +9,7 @@ windll.shcore.SetProcessDpiAwareness(1)
 
 
 def main():
-    # tts is an object of TextToSpeach class, it activates the engine in the background (see line 20)
-    tts = TextToSpeach()
-
-    # app is an object of App class, it starts the gui app (see line 32)
+    # app is an object of App class, it starts the gui app (see line 33)
     root = App()
     root.mainloop()
 
@@ -27,6 +24,10 @@ class TextToSpeach:
         """activate the voice"""
         self.engine.say(texts)
         self.engine.runAndWait()
+
+
+# tts is an object of TextToSpeach class, it activates the engine in the background (see line 20)
+tts = TextToSpeach()
 
 
 class App(tk.Tk):
@@ -235,7 +236,9 @@ class ConditionFile(ttk.Frame):
         self.age_entry = ttk.Entry(self, textvariable=self.age_var)
         self.age_entry.pack()
 
-        self.save_button = ttk.Button(self, text="Save", command=self.validate_info, takefocus=True)
+        self.save_button = ttk.Button(
+            self, text="Save", command=self.validate_info, takefocus=True
+        )
         self.save_button.pack(pady=(15, 0))
 
     def back_button(self):
@@ -251,13 +254,17 @@ class ConditionFile(ttk.Frame):
         check = project.check_name(self.name_var.get())
         if check == "old":
             self.age_entry["state"] = "disable"
-            self.age_label.config(text="no need for age when updating a file", foreground="blue")
+            self.age_label.config(
+                text="no need for age when updating a file", foreground="blue"
+            )
             # since (self.age_label["state"] == "disable") didn't work as needed, need this for `validate_info(self)`
             self.update_state = True
 
         else:
             self.age_entry["state"] = "normal"
-            self.age_label.config(text="please enter the age (with numbers)", foreground="black")
+            self.age_label.config(
+                text="please enter the age (with numbers)", foreground="black"
+            )
             self.update_state = False
 
     def validate_info(self):
@@ -414,7 +421,7 @@ class MedicineFile(ttk.Frame):
             _, self.conditions = project.get_files(self.selected_name.get())
             del _
 
-            self.choose_condition["value"] = self.condition
+            self.choose_condition["value"] = self.conditions
 
     def save_med(self):
         """save the medicine in database, related to the condition specified"""
@@ -685,8 +692,7 @@ class SeeFile(ttk.Frame):
 
     def voice(self):
         """activate text to speach"""
-        # tts is an object of the TextToSpeach() class, see the last lines for reference
-        global tts
+        # tts is an object of the TextToSpeach() class, see line 30
         tts.voice_activated(self.texts)
 
 
